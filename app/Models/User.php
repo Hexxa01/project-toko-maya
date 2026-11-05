@@ -11,6 +11,13 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    protected $attributes = ['role' => 'pelanggan', 'active' => true];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -41,6 +48,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'active' => 'boolean',
             'password' => 'hashed',
         ];
     }
