@@ -63,7 +63,7 @@ Migrasi tambahan bersifat aditif. Jangan memakai `migrate:fresh` pada database b
 
 ## Instalasi lokal
 
-Prasyarat: **PHP ≥8.2**, Composer, Node.js/npm, ekstensi PDO SQLite/MySQL, cURL, mbstring, DOM/XML, Phar dan ZIP. Dompdf dipasang melalui Composer; ekspor Excel memakai XMLWriter dan ZipArchive.
+Runtime yang diuji dan direkomendasikan: **PHP 8.4**. Proyek memerlukan minimal PHP 8.2; PHP 8.5 belum divalidasi dan memunculkan peringatan deprecation pada konfigurasi Laravel 11 yang terkunci. Prasyarat lain: Composer, Node.js/npm, ekstensi PDO SQLite/MySQL, cURL, mbstring, DOM/XML, Phar dan ZIP. Dompdf dipasang melalui Composer; ekspor Excel memakai XMLWriter dan ZipArchive.
 
 ```sh
 composer install --prefer-source --no-interaction
@@ -79,12 +79,39 @@ php -r "file_exists('database/database.sqlite') || touch('database/database.sqli
 php artisan migrate
 php artisan storage:link
 npm run build
-php artisan serve --no-reload
+composer dev
 ```
 
 Di terminal lain jalankan `php artisan schedule:work` untuk pembatalan pesanan belum lunas setelah 24 jam. Produksi memakai cron `schedule:run` setiap menit. Untuk hot reload jalankan `npm run dev -- --host 127.0.0.1`; hentikan Vite sebelum menggunakan build dan hapus `public/hot` jika penanda generated tertinggal.
 
 Pada cloud ini PHP lokal diaktifkan dengan `export PATH=/workspace/.cloud-setup/bin:$PATH`. Gunakan checkout yang sudah tersedia, tanpa membuat worktree baru. Wrapper PHP dan `--no-reload` mempertahankan konfigurasi ekstensi/runtime.
+
+### Windows / PowerShell: server gagal memuat cURL
+
+Jika perintah pembuatan pemilik menampilkan `Akun pemilik dibuat.`, akun sudah tersimpan. Tidak perlu membuat ulang akun, mengganti `APP_KEY`, atau menghapus database.
+
+1. Hentikan proses server yang gagal dengan Ctrl+C. Dari folder proyek, coba menjalankan server dengan konfigurasi PHP tetap diwariskan:
+
+```powershell
+php artisan serve --no-reload
+```
+
+Setelah mengambil versi proyek yang memiliki script baru, perintah ekuivalennya adalah `composer dev`. Opsi `--no-reload` mempertahankan environment proses induk; setelah mengubah `.env`, hentikan dan jalankan server kembali. Opsi ini tidak menonaktifkan ekstensi cURL atau verifikasi TLS.
+
+2. Peringatan `PDO::MYSQL_ATTR_SSL_CA is deprecated since 8.5` berasal dari PHP 8.5 dan konfigurasi aplikasi/framework. Gunakan PHP 8.4 yang sudah diuji untuk proyek ini. Pasang/pilih distribusi PHP Windows yang lengkap dengan ekstensi/DLL yang cocok versi, arsitektur x64/x86, dan TS/NTS-nya. Aktifkan PHP 8.4 di PATH lalu buka PowerShell baru. Jika memakai pengelola PHP seperti Herd, pilih PHP 8.4 lewat pengelola tersebut. Periksa PHP yang sebenarnya dipakai:
+
+```powershell
+php -v
+Get-Command php -All | Select-Object Source
+php --ini
+php --ri curl
+```
+
+`php -v` harus menunjukkan 8.4.x dan `php --ri curl` harus menunjukkan `cURL support => enabled`. Jalankan kembali `php artisan serve --no-reload`.
+
+3. `Unable to start curl module` adalah kegagalan inisialisasi ekstensi PHP, berbeda dari peringatan PDO yang tidak fatal. Jika masih muncul, informasi versi PHP, executable, file INI aktif, dan hasil pemeriksaan cURL di atas diperlukan untuk diagnosis selanjutnya. Jangan menyalin DLL acak dari versi PHP lain atau menonaktifkan cURL sebagai jalan pintas; Midtrans memerlukannya. Mesin cloud Linux tidak dapat membuktikan bahwa konfigurasi PHP di laptop Windows sudah diperbaiki.
+
+Jika proyek diperoleh melalui Download ZIP GitHub, folder hasil ekstraksi mungkin tidak mempunyai `.git`. Perintah `php artisan serve --no-reload` bisa langsung dipakai tanpa mengunduh ulang. Untuk pembaruan source lainnya, gunakan clone Git atau salin pembaruan dengan mempertahankan `.env`, database, serta folder unggahan lokal.
 
 ### Akun pemilik dan login demo
 
