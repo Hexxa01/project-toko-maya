@@ -2,6 +2,12 @@
 
 use Illuminate\Support\Str;
 
+// Resolve the driver-specific constant on PHP 8.4+ without evaluating the
+// deprecated PDO alias on PHP 8.5. Keep the legacy name for PHP 8.2/8.3.
+$mysqlSslCa = extension_loaded('pdo_mysql')
+    ? constant(defined('Pdo\\Mysql::ATTR_SSL_CA') ? 'Pdo\\Mysql::ATTR_SSL_CA' : 'PDO::MYSQL_ATTR_SSL_CA')
+    : null;
+
 return [
 
     /*
@@ -55,7 +61,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                $mysqlSslCa => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
@@ -75,7 +81,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                $mysqlSslCa => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 

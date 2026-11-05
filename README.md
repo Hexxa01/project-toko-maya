@@ -63,7 +63,7 @@ Migrasi tambahan bersifat aditif. Jangan memakai `migrate:fresh` pada database b
 
 ## Instalasi lokal
 
-Runtime yang diuji dan direkomendasikan: **PHP 8.4**. Proyek memerlukan minimal PHP 8.2; PHP 8.5 belum divalidasi dan memunculkan peringatan deprecation pada konfigurasi Laravel 11 yang terkunci. Prasyarat lain: Composer, Node.js/npm, ekstensi PDO SQLite/MySQL, cURL, mbstring, DOM/XML, Phar dan ZIP. Dompdf dipasang melalui Composer; ekspor Excel memakai XMLWriter dan ZipArchive.
+Runtime yang diuji dan direkomendasikan: **PHP 8.4**. Proyek memerlukan minimal PHP 8.2; Perbaikan khusus konfigurasi PDO sudah disediakan untuk PHP 8.5; dukungan seluruh aplikasi pada PHP 8.5/Windows belum divalidasi selengkap runtime PHP 8.4. Prasyarat lain: Composer, Node.js/npm, ekstensi PDO SQLite/MySQL, cURL, mbstring, DOM/XML, Phar dan ZIP. Dompdf dipasang melalui Composer; ekspor Excel memakai XMLWriter dan ZipArchive.
 
 ```sh
 composer install --prefer-source --no-interaction
@@ -98,7 +98,20 @@ php artisan serve --no-reload
 
 Setelah mengambil versi proyek yang memiliki script baru, perintah ekuivalennya adalah `composer dev`. Opsi `--no-reload` mempertahankan environment proses induk; setelah mengubah `.env`, hentikan dan jalankan server kembali. Opsi ini tidak menonaktifkan ekstensi cURL atau verifikasi TLS.
 
-2. Peringatan `PDO::MYSQL_ATTR_SSL_CA is deprecated since 8.5` berasal dari PHP 8.5 dan konfigurasi aplikasi/framework. Gunakan PHP 8.4 yang sudah diuji untuk proyek ini. Pasang/pilih distribusi PHP Windows yang lengkap dengan ekstensi/DLL yang cocok versi, arsitektur x64/x86, dan TS/NTS-nya. Aktifkan PHP 8.4 di PATH lalu buka PowerShell baru. Jika memakai pengelola PHP seperti Herd, pilih PHP 8.4 lewat pengelola tersebut. Periksa PHP yang sebenarnya dipakai:
+2. Peringatan `PDO::MYSQL_ATTR_SSL_CA is deprecated since 8.5` pada source lama berasal dari konfigurasi aplikasi dan konfigurasi bawaan Laravel 11 yang keduanya masih memakai alias PDO lama. Source terbaru memilih konstanta `Pdo\Mysql::ATTR_SSL_CA` saat tersedia dan menggunakan konfigurasi database aplikasi tanpa mengevaluasi defaults database framework tersebut. Defaults lain seperti hashing dan view tetap dimuat; pelaporan error dan opsi CA TLS tidak dimatikan. File `vendor` tidak perlu diedit.
+
+Jika memakai clone Git, perbarui source sebelum menjalankan ulang:
+
+```powershell
+git pull origin main
+composer dump-autoload
+php artisan config:clear
+php artisan serve --no-reload
+```
+
+Jika memakai Download ZIP, salin perubahan `app/Foundation/Bootstrap/LoadConfiguration.php`, `bootstrap/app.php`, dan `config/database.php` dari versi terbaru ke folder proyek yang sama. Ketiga file harus diperbarui bersama. Pertahankan `.env`, database, dan file upload yang sudah ada; kemudian jalankan `composer dump-autoload`, `php artisan config:clear`, dan `php artisan serve --no-reload`. Akun pemilik tidak perlu dibuat ulang.
+
+Gunakan PHP 8.4 jika memerlukan runtime aplikasi yang sudah diuji menyeluruh. Pasang/pilih distribusi PHP Windows yang lengkap dengan ekstensi/DLL yang cocok versi, arsitektur x64/x86, dan TS/NTS-nya. Aktifkan PHP 8.4 di PATH lalu buka PowerShell baru. Jika memakai pengelola PHP seperti Herd, pilih PHP 8.4 lewat pengelola tersebut. Periksa PHP yang sebenarnya dipakai:
 
 ```powershell
 php -v
@@ -153,7 +166,7 @@ npm run build
 php artisan view:cache
 ```
 
-Terdapat **58 tes otomatis dalam 5 kelompok**, menggunakan database SQLite memory terpisah:
+Terdapat **58 tes fitur bisnis dalam 5 kelompok** serta **3 tes regresi konfigurasi** (total **61 tes**), menggunakan database SQLite memory terpisah:
 
 1. `AccessTest`: akun, autentikasi, RBAC, akun nonaktif, akses pelanggan/staf.
 2. `CheckoutTest`: katalog/keranjang, stok, invoice, buku alamat, estimasi ongkir, impor dan ulasan.
@@ -161,7 +174,7 @@ Terdapat **58 tes otomatis dalam 5 kelompok**, menggunakan database SQLite memor
 4. `PaymentTest`: Snap, signature/status server, notifikasi ulang, domain redirect, pembayaran terlambat.
 5. `ReportsTest`: format `.xlsx`, tanggal/peran, PDF, grafik 12 bulan dan batas tahun.
 
-Pengujian gateway menggunakan HTTP fake; tidak mentransfer dana. Pengujian browser memakai akun/data demo lokal. Tes tidak membuktikan performa MySQL pada beban produksi, akses webhook publik, kompatibilitas perangkat printer tertentu, atau keberhasilan transaksi merchant nyata.
+`ConfigurationTest` memeriksa binding bootstrapper, pemuatan defaults framework selain database, dan pelestarian opsi CA MySQL/MariaDB. Pengujian gateway menggunakan HTTP fake; tidak mentransfer dana. Pengujian browser memakai akun/data demo lokal. Tes tidak membuktikan performa MySQL pada beban produksi, akses webhook publik, kompatibilitas perangkat printer tertentu, atau keberhasilan transaksi merchant nyata.
 
 ## Status pengembangan
 
